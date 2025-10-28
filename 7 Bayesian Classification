@@ -1,0 +1,48 @@
+# Naive Bayes Classification - Play Tennis Example
+
+#pip install pandas
+
+import pandas as pd
+
+# --- Step 1: Training Dataset ---
+data = pd.DataFrame({
+    'Weather': ['Sunny', 'Sunny', 'Overcast', 'Rainy', 'Rainy', 'Rainy', 'Overcast', 'Sunny',
+                'Sunny', 'Rainy', 'Sunny', 'Overcast', 'Overcast', 'Rainy'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool', 'Mild',
+                    'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal', 'High',
+                 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'High'],
+    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak',
+             'Weak', 'Weak', 'Strong', 'Strong', 'Weak', 'Strong'],
+    'Play': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No',
+             'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+})
+
+# --- Step 2: Calculate Prior Probabilities ---
+play_counts = data['Play'].value_counts()
+total_count = len(data)
+P_yes = play_counts['Yes'] / total_count
+P_no = play_counts['No'] / total_count
+
+# --- Step 3: Calculate Likelihoods ---
+def likelihood(feature, value, target):
+    df = data[data['Play'] == target]
+    return len(df[df[feature] == value]) / len(df)
+
+# --- Step 4: Predict for 'Sunny' Weather ---
+P_sunny_given_yes = likelihood('Weather', 'Sunny', 'Yes')
+P_sunny_given_no = likelihood('Weather', 'Sunny', 'No')
+P_sunny = len(data[data['Weather'] == 'Sunny']) / total_count
+
+# Using Bayes' theorem
+P_yes_given_sunny = (P_sunny_given_yes * P_yes) / P_sunny
+P_no_given_sunny = (P_sunny_given_no * P_no) / P_sunny
+
+# --- Step 5: Display Results ---
+print("P(Yes | Sunny) =", round(P_yes_given_sunny, 2))
+print("P(No | Sunny)  =", round(P_no_given_sunny, 2))
+
+if P_yes_given_sunny > P_no_given_sunny:
+    print("\nConclusion: Players will likely play when weather is Sunny.")
+else:
+    print("\nConclusion: Players will likely not play when weather is Sunny.")
