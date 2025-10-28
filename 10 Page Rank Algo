@@ -1,0 +1,76 @@
+#pip install networkx matplotlib numpy
+
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+
+edges = [
+    ('B', 'A'),
+    ('B', 'C'),
+    ('C', 'A'),
+    ('D', 'A'),
+    ('D', 'B'),
+    ('D', 'C')
+]
+
+nodes = sorted(list(set(sum(([u, v] for u, v in edges), []))))
+n = len(nodes)
+node_index = {node: i for i, node in enumerate(nodes)}
+
+# Build adjacency matrix
+adj = np.zeros((n, n))
+for u, v in edges:
+    adj[node_index[u], node_index[v]] = 1
+
+# ------------------------------
+# Step 2: Normalize + handle dangling nodes
+# ------------------------------
+for i in range(n):
+    if adj[i].sum() == 0:
+        adj[i] = np.ones(n) / n
+    else:
+        adj[i] /= adj[i].sum()
+
+# ------------------------------
+# Step 3: PageRank computation
+# ------------------------------
+damping = 0.85
+pr = np.ones(n) / n
+tol = 1e-6
+max_iter = 100
+
+for it in range(max_iter):
+    new_pr = (1 - damping) / n + damping * adj.T.dot(pr)
+    if np.linalg.norm(new_pr - pr, 1) < tol:
+        print(f"Converged in {it + 1} iterations.\n")
+        break
+    pr = new_pr
+
+# ------------------------------
+# Step 4: Output results
+# ------------------------------
+for node, rank in zip(nodes, pr):
+    print(f"PageRank({node}) = {rank:.4f}")
+
+# ------------------------------
+# Step 5: Visualization
+# ------------------------------
+G = nx.DiGraph()
+G.add_edges_from(edges)
+
+plt.figure(figsize=(8, 6))
+pos = nx.spring_layout(G, k=0.5, iterations=100, seed=42)
+
+nx.draw_networkx_nodes(
+    G, pos,
+    node_size=[v * 4000 for v in pr],
+    node_color=pr,
+    cmap=plt.cm.plasma,
+    alpha=0.9
+)
+nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=15)
+nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+
+plt.title("PageRank Visualization")
+plt.axis("off")
+plt.show()
