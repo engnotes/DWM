@@ -1,0 +1,59 @@
+# K-Means Clustering with Dense and Spreaded Clusters
+
+#pip install numpy matplotlib
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Step 1: Generate Synthetic Data ---
+# 5 clusters, each dense (small std) but spatially separated
+np.random.seed(42)
+cluster_centers = np.array([
+    [2, 2],
+    [8, 3],
+    [3, 8],
+    [9, 9],
+    [5, 12]
+])
+
+data = []
+for center in cluster_centers:
+    # Each cluster: 40 points, small spread (std=0.7)
+    points = np.random.randn(40, 2) * 0.7 + center
+    data.append(points)
+data = np.vstack(data)
+
+# --- Step 2: Set Parameters ---
+k = 5  # number of clusters
+max_iters = 100
+
+# --- Step 3: Initialize Random Centroids ---
+centroids = data[np.random.choice(len(data), k, replace=False)]
+
+# --- Step 4: K-Means Algorithm ---
+for _ in range(max_iters):
+    # Assign each point to nearest centroid
+    distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
+    cluster_labels = np.argmin(distances, axis=1)
+
+    # Compute new centroids
+    new_centroids = np.array([data[cluster_labels == j].mean(axis=0) for j in range(k)])
+
+    # Stop if centroids stabilize
+    if np.allclose(centroids, new_centroids):
+        break
+    centroids = new_centroids
+
+# --- Step 5: Display Results ---
+print("Final Centroids:\n", np.round(centroids, 2))
+print("\nCluster Counts:", np.bincount(cluster_labels))
+
+# --- Step 6: Visualization ---
+colors = ['r', 'g', 'b', 'c', 'm']
+for i in range(k):
+    points = data[cluster_labels == i]
+    plt.scatter(points[:, 0], points[:, 1], s=40, c=colors[i], label=f'Cluster {i+1}')
+plt.scatter(centroids[:, 0], centroids[:, 1], s=200, c='yellow', marker='*', label='Centroids')
+plt.title('K-Means Clustering (Dense & Spreaded)')
+plt.legend()
+plt.show()
